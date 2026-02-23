@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOCAi 3D Tilt Alignment</title>
+<title>Top View Gyro Guide</title>
 
 <style>
 body{
@@ -21,7 +21,7 @@ body{
   position:relative;
   width:320px;
   height:320px;
-  perspective:900px;
+  perspective:1000px;
 }
 
 .target{
@@ -46,30 +46,42 @@ body{
   transform:translate(-50%,-50%);
   transform-style:preserve-3d;
   backface-visibility:hidden;
+  background: radial-gradient(circle at center,
+              rgba(255,0,0,0.15),
+              transparent 70%);
 }
 
 button{
-  margin-top:30px;
+  margin-top:20px;
   padding:12px 20px;
+}
+
+.status{
+  margin-top:15px;
+  font-size:14px;
+  opacity:0.9;
 }
 </style>
 </head>
 <body>
 
-<h3>SOCAi 3D Tilt Alignment</h3>
+<h3>SOCAi 3D Tilt + Depth</h3>
 
 <div class="container">
   <div class="target"></div>
-  <div class="dynamic" id="dynamicCircle"></div>
+  <div class="dynamic" id="circle"></div>
 </div>
 
-<div id="tiltValue">Tilt: 0°</div>
+<div class="status" id="statusText">
+Tilt: 0° | Depth: 0° | Depth Score: 0%
+</div>
+
 <button id="startBtn">Start</button>
 
 <script>
 
-const circle = document.getElementById("dynamicCircle");
-const tiltValue = document.getElementById("tiltValue");
+const circle = document.getElementById("circle");
+const statusText = document.getElementById("statusText");
 const btn = document.getElementById("startBtn");
 
 let running = false;
@@ -99,25 +111,32 @@ function animate(){
   const distance = Math.sqrt(currentX*currentX + currentY*currentY);
 
   // Magnetic snap
-  if(distance < 5){
-    currentX *= 0.7;
-    currentY *= 0.7;
+  if(distance < 4){
+    currentX *= 0.6;
+    currentY *= 0.6;
   }
 
-  const depthScale = 1 + (Math.abs(currentY) / 200);
+  // ----- DEPTH EFFECT -----
+  const depthAmount = currentY * -2;
+  const depthScale = 1 + Math.abs(currentY) / 180;
+  const warpY = 1 - Math.abs(currentY) / 600;
 
   circle.style.transform =
-    `translate(-50%, -50%)
-     rotateX(${currentY * -0.6}deg)
-     rotateY(${currentX * 0.6}deg)
-     scale(${depthScale})`;
+    `
+    translate(-50%, -50%)
+    rotateX(${currentY * -0.7}deg)
+    rotateY(${currentX * 0.7}deg)
+    translateZ(${depthAmount}px)
+    scale(${depthScale}, ${warpY})
+    `;
 
   circle.style.boxShadow =
-    `${-currentX}px ${-currentY}px 40px rgba(255,0,0,0.25)`;
+    `${-currentX}px ${-currentY}px 50px rgba(255,0,0,0.25)`;
 
-  const color = distance < 8 ? "#2BE38C" :
-                distance < 20 ? "#FFC857" :
-                "#FF4D4D";
+  const color =
+    distance < 6 ? "#2BE38C" :
+    distance < 18 ? "#FFC857" :
+    "#FF4D4D";
 
   circle.style.borderColor = color;
 
@@ -126,8 +145,8 @@ function animate(){
 
 function handleOrientation(event){
 
-  const gamma = event.gamma || 0;
-  const beta  = event.beta  || 0;
+  const gamma = event.gamma || 0;  // left/right
+  const beta  = event.beta  || 0;  // forward/back
 
   const sensitivity = 2.5;
 
@@ -135,7 +154,14 @@ function handleOrientation(event){
   targetY = beta * sensitivity;
 
   const tiltMagnitude = Math.sqrt(gamma*gamma + beta*beta);
-  tiltValue.innerText = "Tilt: " + tiltMagnitude.toFixed(1) + "°";
+  const depthDegrees = Math.abs(beta);
+
+  const depthScore = Math.min(depthDegrees / 45, 1) * 100;
+
+  statusText.innerText =
+    "Tilt: " + tiltMagnitude.toFixed(1) + "°" +
+    " | Depth: " + depthDegrees.toFixed(1) + "°" +
+    " | Depth Score: " + depthScore.toFixed(0) + "%";
 }
 
 function start(){
