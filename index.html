@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOCAi Tilt Overlay Demo</title>
+<title>SOCAi 3D Tilt Alignment</title>
 
 <style>
 body{
@@ -21,12 +21,13 @@ body{
   position:relative;
   width:320px;
   height:320px;
+  perspective:900px;
 }
 
 .target{
   position:absolute;
-  width:140px;
-  height:140px;
+  width:180px;
+  height:180px;
   border:3px solid white;
   border-radius:50%;
   top:50%;
@@ -36,13 +37,15 @@ body{
 
 .dynamic{
   position:absolute;
-  width:140px;
-  height:140px;
+  width:180px;
+  height:180px;
   border:3px solid #FF4D4D;
   border-radius:50%;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
 }
 
 button{
@@ -53,36 +56,34 @@ button{
 </head>
 <body>
 
-<h3>SOCAi Gyro Alignment Demo</h3>
+<h3>SOCAi 3D Tilt Alignment</h3>
 
 <div class="container">
   <div class="target"></div>
   <div class="dynamic" id="dynamicCircle"></div>
 </div>
 
-<div id="debug">Waiting...</div>
+<div id="tiltValue">Tilt: 0°</div>
 <button id="startBtn">Start</button>
 
 <script>
 
 const circle = document.getElementById("dynamicCircle");
-const debug = document.getElementById("debug");
+const tiltValue = document.getElementById("tiltValue");
 const btn = document.getElementById("startBtn");
 
 let running = false;
 
-// Raw sensor values
 let targetX = 0;
 let targetY = 0;
 let currentX = 0;
 let currentY = 0;
 
-// Spring smoothing
-const spring = 0.08;
-const friction = 0.85;
-
 let velocityX = 0;
 let velocityY = 0;
+
+const spring = 0.08;
+const friction = 0.85;
 
 function animate(){
 
@@ -98,37 +99,43 @@ function animate(){
   const distance = Math.sqrt(currentX*currentX + currentY*currentY);
 
   // Magnetic snap
-  if(distance < 8){
-    currentX *= 0.6;
-    currentY *= 0.6;
+  if(distance < 5){
+    currentX *= 0.7;
+    currentY *= 0.7;
   }
 
-  // Depth effect (scale based on forward/back tilt)
-  const depthScale = 1 + (Math.abs(currentY) / 300);
+  const depthScale = 1 + (Math.abs(currentY) / 200);
 
   circle.style.transform =
-    `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))
+    `translate(-50%, -50%)
+     rotateX(${currentY * -0.6}deg)
+     rotateY(${currentX * 0.6}deg)
      scale(${depthScale})`;
 
-  circle.style.borderColor =
-    distance < 10 ? "#2BE38C" : "#FF4D4D";
+  circle.style.boxShadow =
+    `${-currentX}px ${-currentY}px 40px rgba(255,0,0,0.25)`;
+
+  const color = distance < 8 ? "#2BE38C" :
+                distance < 20 ? "#FFC857" :
+                "#FF4D4D";
+
+  circle.style.borderColor = color;
 
   requestAnimationFrame(animate);
 }
 
 function handleOrientation(event){
 
-  const gamma = event.gamma || 0; // left-right
-  const beta  = event.beta  || 0; // forward-back
+  const gamma = event.gamma || 0;
+  const beta  = event.beta  || 0;
 
   const sensitivity = 2.5;
 
   targetX = gamma * sensitivity;
   targetY = beta * sensitivity;
 
-  debug.innerText =
-    "gamma: " + gamma.toFixed(1) +
-    " | beta: " + beta.toFixed(1);
+  const tiltMagnitude = Math.sqrt(gamma*gamma + beta*beta);
+  tiltValue.innerText = "Tilt: " + tiltMagnitude.toFixed(1) + "°";
 }
 
 function start(){
