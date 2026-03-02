@@ -2,130 +2,117 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOCAi Magnetic Wrap Grid</title>
+<title>SOCAi Dramatic Magnetic Wrap</title>
 
 <style>
-  body{
-    margin:0;background:#0f0f14;height:100vh;display:flex;align-items:center;justify-content:center;
-    font-family:system-ui;color:#fff
-  }
-  .wrap{width:360px}
-  .stage{
-    position:relative;width:340px;height:340px;margin:0 auto;
-    border-radius:26px;background:rgba(255,255,255,.03);
-    border:1px solid rgba(255,255,255,.08);
-    overflow:hidden;
-    perspective:1200px;
-  }
+body{
+  margin:0;background:#0f0f14;height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  font-family:system-ui;color:#fff;
+}
 
-  /* OUTER (LOCKED) GRID — clearer */
-  .outerGrid{
-    position:absolute;inset:0;pointer-events:none;opacity:.55;
-    background:
-      linear-gradient(to right, rgba(255,255,255,.22) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255,255,255,.22) 1px, transparent 1px);
-    background-size: 26px 26px;
-  }
-  .outerCross{
-    position:absolute;inset:0;pointer-events:none;opacity:.85;
-    background:
-      linear-gradient(to right, transparent 49.5%, rgba(255,255,255,.45) 50%, transparent 50.5%),
-      linear-gradient(to bottom, transparent 49.5%, rgba(255,255,255,.45) 50%, transparent 50.5%);
-    mix-blend-mode:screen;
-  }
+.stage{
+  position:relative;width:340px;height:340px;
+  border-radius:28px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+  perspective:1400px;
+}
 
-  /* INNER (MAGNETIC WRAP) */
-  .inner{
-    position:absolute;inset:0;pointer-events:none;
-    transform-style:preserve-3d;
-    will-change:transform, filter;
-  }
+/* OUTER STATIC GRID */
+.outer{
+  position:absolute;inset:0;opacity:.6;
+  background:
+    linear-gradient(to right, rgba(255,255,255,.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.25) 1px, transparent 1px);
+  background-size:28px 28px;
+}
 
-  /* Base inner dots grid (clearer + premium) */
-  .innerGrid{
-    position:absolute;inset:-26px;opacity:.75;
-    background:
-      radial-gradient(circle, rgba(255,255,255,.22) 1.2px, transparent 1.3px);
-    background-size: 18px 18px;
-  }
+/* INNER WRAP */
+.inner{
+  position:absolute;inset:-40px;
+  transform-style:preserve-3d;
+  will-change:transform, filter;
+}
 
-  /* Wrap lighting: center highlight that "pulls" */
-  .wrapLight{
-    position:absolute;inset:-40px;opacity:.9;
-    background:
-      radial-gradient(circle at var(--lx, 50%) var(--ly, 50%),
-        rgba(255,255,255,.22) 0%,
-        rgba(255,255,255,.12) 20%,
-        rgba(255,255,255,.06) 38%,
-        transparent 62%);
-    mix-blend-mode:screen;
-    filter: blur(1px);
-  }
+/* DOT GRID */
+.grid{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.28) 1.5px, transparent 1.6px);
+  background-size:20px 20px;
+  opacity:.85;
+}
 
-  /* Pull band (directional “tension” strip) */
-  .pullBand{
-    position:absolute;inset:-40px;
-    background:
-      radial-gradient(ellipse at var(--bx, 50%) var(--by, 50%),
-        rgba(255,255,255,.18) 0%,
-        rgba(255,255,255,.10) 22%,
-        transparent 55%);
-    opacity:.55;
-    mix-blend-mode:screen;
-    filter: blur(2px);
-  }
+/* DRAMATIC SHADOW TENSION */
+.shadow{
+  position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%,
+    rgba(0,0,0,.4) 0%,
+    rgba(0,0,0,.25) 35%,
+    transparent 70%);
+  mix-blend-mode:multiply;
+}
 
-  /* Target ring (static) */
-  .targetRing{
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
-  }
-  .ring{
-    width:190px;height:190px;border-radius:999px;
-    border:2px solid rgba(255,255,255,.42);
-  }
+/* TARGET RING */
+.ringWrap{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.ring{
+  width:190px;height:190px;border-radius:999px;
+  border:3px solid rgba(255,255,255,.5);
+}
 
-  /* State rings (3 versions) */
-  .stateStroke{
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
-  }
-  .strokeRing{
-    width:190px;height:190px;border-radius:999px;
-    border:3px solid var(--c);
-    filter: drop-shadow(0 0 12px var(--gl)) drop-shadow(0 0 28px rgba(0,0,0,0));
-    transition: filter .25s ease, opacity .25s ease;
-  }
+/* ARROWS */
+.arrow{
+  position:absolute;
+  font-size:28px;
+  opacity:0;
+  transition:all .2s ease;
+}
 
-  /* State vars */
-  .red  { --c: rgba(255,77,77,1);  --gl: rgba(255,77,77,.65); }
-  .yellow{--c: rgba(255,200,87,1); --gl: rgba(255,200,87,.65); }
-  .green{ --c: rgba(43,227,140,1); --gl: rgba(43,227,140,.75); }
+.arrow.show{
+  opacity:1;
+  transform:scale(1.2);
+}
 
-  .pulse{ animation:pulse 1.2s ease-in-out infinite; }
-  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+.arrow.left{ left:10px; top:50%; transform:translateY(-50%); }
+.arrow.right{ right:10px; top:50%; transform:translateY(-50%); }
+.arrow.up{ top:10px; left:50%; transform:translateX(-50%); }
+.arrow.down{ bottom:10px; left:50%; transform:translateX(-50%); }
 
-  .meta{margin-top:14px;opacity:.85;font-size:14px;text-align:center}
-  button{margin:14px auto 0;display:block;padding:10px 14px;background:#222;border:1px solid #444;color:#fff;border-radius:10px}
+.meta{
+  margin-top:16px;text-align:center;font-size:14px;opacity:.85;
+}
+
+button{
+  margin-top:12px;padding:10px 16px;
+  background:#222;border:1px solid #444;color:#fff;border-radius:10px;
+}
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div>
   <div class="stage">
-    <div class="outerGrid"></div>
-    <div class="outerCross"></div>
+    <div class="outer"></div>
 
-    <!-- INNER WRAP GRID -->
     <div class="inner" id="inner">
-      <div class="innerGrid"></div>
-      <div class="wrapLight" id="wrapLight"></div>
-      <div class="pullBand" id="pullBand"></div>
+      <div class="grid"></div>
+      <div class="shadow"></div>
     </div>
 
-    <div class="targetRing"><div class="ring"></div></div>
-
-    <!-- State ring -->
-    <div class="stateStroke red" id="state">
-      <div class="strokeRing" id="stroke"></div>
+    <div class="ringWrap">
+      <div class="ring"></div>
     </div>
+
+    <div class="arrow left" id="arrowLeft">⬅</div>
+    <div class="arrow right" id="arrowRight">➡</div>
+    <div class="arrow up" id="arrowUp">⬆</div>
+    <div class="arrow down" id="arrowDown">⬇</div>
+
   </div>
 
   <div class="meta" id="meta">Tilt: 0°</div>
@@ -133,147 +120,110 @@
 </div>
 
 <script>
-  const inner = document.getElementById('inner');
-  const wrapLight = document.getElementById('wrapLight');
-  const pullBand = document.getElementById('pullBand');
-  const state = document.getElementById('state');
-  const stroke = document.getElementById('stroke');
-  const meta = document.getElementById('meta');
-  const btn = document.getElementById('start');
+const inner = document.getElementById('inner');
+const meta = document.getElementById('meta');
 
-  let running = false;
-  let snapped = false;
+const arrowLeft = document.getElementById('arrowLeft');
+const arrowRight = document.getElementById('arrowRight');
+const arrowUp = document.getElementById('arrowUp');
+const arrowDown = document.getElementById('arrowDown');
 
-  // target angles
-  const targetGamma = 0;
-  const targetBeta  = 0;
+let tx=0, ty=0, x=0, y=0, vx=0, vy=0;
+const spring=0.09;
+const friction=0.84;
+const sense=2.5;
+let running=false;
 
-  // spring
-  let tx=0, ty=0, x=0, y=0, vx=0, vy=0;
-  const spring=0.075, friction=0.86;
+function animate(){
 
-  // feel
-  const sense = 2.4;      // sensor -> ui
-  const maxErr = 40;      // clamp
-  const maxBend = 18;     // deg max wrap
-  const maxShift = 18;    // px (kecil saja, agar tidak terasa "geser biasa")
-  const maxSkew = 6;      // deg
+  vx += (tx - x) * spring;
+  vy += (ty - y) * spring;
 
-  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+  vx *= friction;
+  vy *= friction;
 
-  function setState(dist){
-    state.classList.remove('red','yellow','green');
-    stroke.classList.remove('pulse');
+  x += vx;
+  y += vy;
 
-    if(dist > 22){
-      state.classList.add('red');
-      snapped = false;
-    }else if(dist > 10){
-      state.classList.add('yellow');
-      snapped = false;
+  const dist = Math.hypot(x,y);
+
+  /* STRONG WRAP EFFECT */
+  const bendX = y * -1.4;
+  const bendY = x * 1.4;
+
+  const depth = dist * 1.2;
+  const scale = 1 + dist/180;
+
+  inner.style.transform = `
+    rotateX(${bendX}deg)
+    rotateY(${bendY}deg)
+    translateZ(${depth}px)
+    scale(${scale})
+  `;
+
+  /* ARROW LOGIC */
+  arrowLeft.classList.remove("show");
+  arrowRight.classList.remove("show");
+  arrowUp.classList.remove("show");
+  arrowDown.classList.remove("show");
+
+  if(Math.abs(x) > 8){
+    if(x > 0){
+      arrowLeft.classList.add("show");
     }else{
-      state.classList.add('green');
-      stroke.classList.add('pulse');
-      if(!snapped){
-        if(navigator.vibrate) navigator.vibrate(40);
-        snapped = true;
-      }
+      arrowRight.classList.add("show");
     }
   }
 
-  function animate(){
-    // spring smoothing
-    vx += (tx - x) * spring;
-    vy += (ty - y) * spring;
-    vx *= friction; vy *= friction;
-    x += vx; y += vy;
-
-    const dist = Math.hypot(x,y);
-
-    // snap near center
-    if(dist < 2.8){
-      x *= 0.72; y *= 0.72;
+  if(Math.abs(y) > 8){
+    if(y > 0){
+      arrowUp.classList.add("show");
+    }else{
+      arrowDown.classList.add("show");
     }
-
-    // “wrap pull” mapping:
-    // - shift small (so it doesn't feel like normal translate)
-    // - bend stronger (so it feels like surface warping)
-    const nx = clamp(x / maxErr, -1, 1); // normalized error
-    const ny = clamp(y / maxErr, -1, 1);
-
-    const shiftX = clamp(-nx * maxShift, -maxShift, maxShift);
-    const shiftY = clamp(-ny * maxShift, -maxShift, maxShift);
-
-    const bendY = clamp(nx * maxBend, -maxBend, maxBend);      // rotateY from X error
-    const bendX = clamp(-ny * maxBend, -maxBend, maxBend);     // rotateX from Y error
-    const skewX = clamp(nx * maxSkew, -maxSkew, maxSkew);
-    const skewY = clamp(ny * maxSkew, -maxSkew, maxSkew);
-
-    // rubber feel
-    const squash = 1 - Math.min(dist/140, 0.16);
-    const stretch = 1 + Math.min(dist/260, 0.10);
-
-    inner.style.transform = `
-      translate3d(${shiftX}px, ${shiftY}px, 0px)
-      rotateY(${bendY}deg)
-      rotateX(${bendX}deg)
-      skew(${skewX}deg, ${skewY}deg)
-      scale(${stretch}, ${squash})
-    `;
-
-    // move light focal point opposite error so it feels "pulled" to target
-    const lightX = 50 + (-nx * 18);
-    const lightY = 50 + (-ny * 18);
-    wrapLight.style.setProperty('--lx', lightX + '%');
-    wrapLight.style.setProperty('--ly', lightY + '%');
-
-    // band focal is further out (tension direction)
-    const bandX = 50 + (-nx * 28);
-    const bandY = 50 + (-ny * 28);
-    pullBand.style.setProperty('--bx', bandX + '%');
-    pullBand.style.setProperty('--by', bandY + '%');
-
-    setState(dist);
-
-    requestAnimationFrame(animate);
   }
 
-  function handleOrientation(e){
-    const gamma = e.gamma ?? 0;
-    const beta  = e.beta  ?? 0;
-
-    const errX = (gamma - targetGamma);
-    const errY = (beta  - targetBeta);
-
-    // drive target vector (not directly transform)
-    tx = clamp(errX * sense, -maxErr, maxErr);
-    ty = clamp(errY * sense, -maxErr, maxErr);
-
-    const tiltMag = Math.hypot(errX, errY);
-    meta.textContent = `Tilt: ${tiltMag.toFixed(1)}°`;
+  if(dist < 5){
+    if(navigator.vibrate){
+      navigator.vibrate(30);
+    }
   }
 
-  async function start(){
-    if(running){
-      window.removeEventListener('deviceorientation', handleOrientation);
-      btn.textContent = 'Start';
-      running = false;
-      return;
-    }
+  requestAnimationFrame(animate);
+}
 
-    if(typeof DeviceOrientationEvent !== 'undefined'
-      && typeof DeviceOrientationEvent.requestPermission === 'function'){
-      const res = await DeviceOrientationEvent.requestPermission().catch(()=>null);
-      if(res !== 'granted') return;
-    }
+function handleOrientation(e){
+  const gamma = e.gamma || 0;
+  const beta = e.beta || 0;
 
-    window.addEventListener('deviceorientation', handleOrientation, { passive:true });
-    btn.textContent = 'Stop';
-    running = true;
+  tx = gamma * sense;
+  ty = beta * sense;
+
+  const tiltMag = Math.hypot(gamma, beta);
+  meta.textContent = "Tilt: " + tiltMag.toFixed(1) + "°";
+}
+
+async function start(){
+
+  if(running){
+    window.removeEventListener("deviceorientation", handleOrientation);
+    running=false;
+    return;
   }
 
-  btn.addEventListener('click', start);
-  animate();
+  if(typeof DeviceOrientationEvent !== "undefined" &&
+     typeof DeviceOrientationEvent.requestPermission === "function"){
+     const res = await DeviceOrientationEvent.requestPermission();
+     if(res !== "granted") return;
+  }
+
+  window.addEventListener("deviceorientation", handleOrientation);
+  running=true;
+}
+
+document.getElementById("start").addEventListener("click", start);
+
+animate();
 </script>
 </body>
 </html>
