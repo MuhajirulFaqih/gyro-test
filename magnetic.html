@@ -1,0 +1,211 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{margin:0;background:#0f0f14;height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;color:#fff}
+  .wrap{width:340px}
+  .stage{
+    position:relative;width:320px;height:320px;margin:0 auto;
+    border-radius:24px;background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.06);
+    overflow:hidden;
+  }
+
+  /* OUTER = LOCKED FRAME (statis) */
+  .outerGrid{
+    position:absolute;inset:0;opacity:.35;pointer-events:none;
+    background:
+      linear-gradient(to right, rgba(255,255,255,.10) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,.10) 1px, transparent 1px);
+    background-size: 24px 24px;
+    transform: translateZ(0);
+  }
+
+  /* INNER = MAGNETIC GRID (bergerak + melengkung) */
+  .inner{
+    position:absolute;inset:0;pointer-events:none;
+    transform-style:preserve-3d;
+    will-change:transform, filter;
+  }
+  .innerGrid{
+    position:absolute;inset:-20px;opacity:.6;
+    background:
+      radial-gradient(circle at center, rgba(255,255,255,.10) 1px, transparent 1px);
+    background-size: 18px 18px;
+    filter: blur(.0px);
+  }
+
+  /* Target ring (statis) */
+  .targetRing{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  }
+  .ring{
+    width:180px;height:180px;border-radius:999px;
+    border:2px solid rgba(255,255,255,.45);
+  }
+
+  /* Dynamic state */
+  .state-red  { --c: rgba(255,77,77,1);  --gl: rgba(255,77,77,.55); }
+  .state-yellow{--c: rgba(255,200,87,1); --gl: rgba(255,200,87,.55); }
+  .state-green{ --c: rgba(43,227,140,1); --gl: rgba(43,227,140,.65); }
+
+  .stateStroke{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  }
+  .strokeRing{
+    width:180px;height:180px;border-radius:999px;
+    border:3px solid var(--c);
+    filter: drop-shadow(0 0 14px var(--gl)) drop-shadow(0 0 30px rgba(0,0,0,.0));
+  }
+
+  .pulse{
+    animation:pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+  .meta{margin-top:14px;opacity:.8;font-size:14px;text-align:center}
+  button{margin:14px auto 0;display:block;padding:10px 14px;background:#222;border:1px solid #444;color:#fff;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage">
+    <div class="outerGrid"></div>
+
+    <div class="inner" id="inner">
+      <div class="innerGrid"></div>
+    </div>
+
+    <div class="targetRing"><div class="ring"></div></div>
+    <div class="stateStroke state-red" id="state">
+      <div class="strokeRing" id="stroke"></div>
+    </div>
+  </div>
+
+  <div class="meta" id="meta">Tilt: 0°</div>
+  <button id="start">Start</button>
+</div>
+
+<script>
+  const inner = document.getElementById('inner');
+  const state = document.getElementById('state');
+  const stroke = document.getElementById('stroke');
+  const meta = document.getElementById('meta');
+  const btn = document.getElementById('start');
+
+  let running = false;
+  let snapped = false;
+
+  // Target angles (misal top view target = 0,0)
+  const targetGamma = 0; // left-right
+  const targetBeta  = 0; // up-down
+
+  // spring smoothing
+  let tx=0, ty=0, x=0, y=0, vx=0, vy=0;
+  const spring=0.08, friction=0.86;
+
+  // feel tuning
+  const sense = 2.4;    // sensor -> UI scaling
+  const maxShift = 26;  // px max pull
+  const maxBend  = 16;  // deg max curvature
+
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+  function setState(dist){
+    state.classList.remove('state-red','state-yellow','state-green');
+    stroke.classList.remove('pulse');
+
+    if(dist > 22){
+      state.classList.add('state-red');
+      snapped = false;
+    }else if(dist > 10){
+      state.classList.add('state-yellow');
+      snapped = false;
+    }else{
+      state.classList.add('state-green');
+      stroke.classList.add('pulse');
+      if(!snapped){
+        if(navigator.vibrate) navigator.vibrate(40);
+        snapped = true;
+      }
+    }
+  }
+
+  function animate(){
+    vx += (tx - x) * spring;
+    vy += (ty - y) * spring;
+    vx *= friction; vy *= friction;
+    x += vx; y += vy;
+
+    const dist = Math.hypot(x,y);
+
+    // Magnetic snap dekat center
+    if(dist < 3){
+      x *= 0.7; y *= 0.7;
+    }
+
+    // === “Magnetic pull” ===
+    // Inner grid bergerak ke arah koreksi (kebalikan dari error)
+    const shiftX = clamp(-x, -maxShift, maxShift);
+    const shiftY = clamp(-y, -maxShift, maxShift);
+
+    // === “Curvature / Bend” ===
+    // Semakin besar error, semakin melengkung.
+    // Kita simulasi dengan rotate + skew + non-uniform scale (terasa seperti warp)
+    const bendX = clamp(x * 0.55, -maxBend, maxBend);  // left-right bend
+    const bendY = clamp(y * 0.55, -maxBend, maxBend);  // up-down bend
+    const squash = 1 - Math.min(dist/120, 0.14);        // sedikit compress saat jauh
+
+    inner.style.transform = `
+      translate3d(${shiftX}px, ${shiftY}px, 0px)
+      rotateY(${bendX}deg)
+      rotateX(${-bendY}deg)
+      skew(${bendX*0.25}deg, ${bendY*0.25}deg)
+      scale(${1 + dist/320}, ${squash})
+    `;
+
+    setState(dist);
+    requestAnimationFrame(animate);
+  }
+
+  function handleOrientation(e){
+    const gamma = e.gamma ?? 0; // LR
+    const beta  = e.beta  ?? 0; // UD
+
+    const errX = (gamma - targetGamma);
+    const errY = (beta  - targetBeta);
+
+    // mapping error -> target vector (yang nanti dipakai inner untuk “ditarik”)
+    tx = clamp(errX * sense, -40, 40);
+    ty = clamp(errY * sense, -40, 40);
+
+    const tiltMag = Math.hypot(errX, errY);
+    meta.textContent = `Tilt: ${tiltMag.toFixed(1)}°`;
+  }
+
+  async function start(){
+    if(running){
+      window.removeEventListener('deviceorientation', handleOrientation);
+      btn.textContent = 'Start';
+      running = false;
+      return;
+    }
+
+    // iOS permission
+    if(typeof DeviceOrientationEvent !== 'undefined'
+      && typeof DeviceOrientationEvent.requestPermission === 'function'){
+      const res = await DeviceOrientationEvent.requestPermission().catch(()=>null);
+      if(res !== 'granted') return;
+    }
+
+    window.addEventListener('deviceorientation', handleOrientation, { passive:true });
+    btn.textContent = 'Stop';
+    running = true;
+  }
+
+  btn.addEventListener('click', start);
+  animate();
+</script>
+</body>
+</html>
