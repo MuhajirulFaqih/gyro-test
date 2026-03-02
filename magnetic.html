@@ -2,75 +2,89 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOCAi Dramatic Magnetic Wrap</title>
+<title>SOCAi Masked Circle Alignment</title>
 
 <style>
 body{
-  margin:0;background:#0f0f14;height:100vh;
-  display:flex;align-items:center;justify-content:center;
-  font-family:system-ui;color:#fff;
+  margin:0;
+  background:#0f0f14;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:system-ui;
+  color:white;
 }
 
 .stage{
-  position:relative;width:340px;height:340px;
-  border-radius:28px;
-  background:rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.08);
-  overflow:hidden;
-  perspective:1400px;
+  position:relative;
+  width:360px;
+  height:360px;
 }
 
-/* OUTER STATIC GRID */
-.outer{
-  position:absolute;inset:0;opacity:.6;
-  background:
-    linear-gradient(to right, rgba(255,255,255,.25) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,.25) 1px, transparent 1px);
-  background-size:28px 28px;
+.circleContainer{
+  position:absolute;
+  width:260px;
+  height:260px;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  overflow:hidden; /* fallback */
 }
 
-/* INNER WRAP */
-.inner{
-  position:absolute;inset:-40px;
-  transform-style:preserve-3d;
-  will-change:transform, filter;
+/* MASK grid only inside circle */
+.masked{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+
+  -webkit-mask: radial-gradient(circle, white 100%, transparent 101%);
+  mask: radial-gradient(circle, white 100%, transparent 101%);
 }
 
-/* DOT GRID */
+/* GRID */
 .grid{
-  position:absolute;inset:0;
+  position:absolute;
+  inset:-40px;
   background:
-    radial-gradient(circle, rgba(255,255,255,.28) 1.5px, transparent 1.6px);
+    radial-gradient(circle, rgba(255,255,255,.30) 1.4px, transparent 1.5px);
   background-size:20px 20px;
   opacity:.85;
+  transform-style:preserve-3d;
+  will-change:transform;
 }
 
-/* DRAMATIC SHADOW TENSION */
-.shadow{
-  position:absolute;inset:0;
-  background:radial-gradient(circle at 50% 50%,
-    rgba(0,0,0,.4) 0%,
-    rgba(0,0,0,.25) 35%,
-    transparent 70%);
-  mix-blend-mode:multiply;
-}
-
-/* TARGET RING */
-.ringWrap{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-}
+/* RING STATE */
 .ring{
-  width:190px;height:190px;border-radius:999px;
-  border:3px solid rgba(255,255,255,.5);
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  border:3px solid;
+  transition:border-color .25s ease, box-shadow .25s ease;
+}
+
+.red{
+  border-color:#FF4D4D;
+  box-shadow:0 0 14px rgba(255,77,77,.6);
+}
+
+.yellow{
+  border-color:#FFC857;
+  box-shadow:0 0 14px rgba(255,200,87,.6);
+}
+
+.green{
+  border-color:#2BE38C;
+  box-shadow:0 0 18px rgba(43,227,140,.75);
 }
 
 /* ARROWS */
 .arrow{
   position:absolute;
-  font-size:28px;
+  font-size:26px;
   opacity:0;
-  transition:all .2s ease;
+  transition:.2s ease;
 }
 
 .arrow.show{
@@ -78,18 +92,26 @@ body{
   transform:scale(1.2);
 }
 
-.arrow.left{ left:10px; top:50%; transform:translateY(-50%); }
-.arrow.right{ right:10px; top:50%; transform:translateY(-50%); }
-.arrow.up{ top:10px; left:50%; transform:translateX(-50%); }
-.arrow.down{ bottom:10px; left:50%; transform:translateX(-50%); }
+.arrow.left{ left:-40px; top:50%; transform:translateY(-50%); }
+.arrow.right{ right:-40px; top:50%; transform:translateY(-50%); }
+.arrow.up{ top:-40px; left:50%; transform:translateX(-50%); }
+.arrow.down{ bottom:-40px; left:50%; transform:translateX(-50%); }
 
 .meta{
-  margin-top:16px;text-align:center;font-size:14px;opacity:.85;
+  margin-top:380px;
+  text-align:center;
+  font-size:14px;
+  opacity:.85;
 }
 
 button{
-  margin-top:12px;padding:10px 16px;
-  background:#222;border:1px solid #444;color:#fff;border-radius:10px;
+  display:block;
+  margin:10px auto;
+  padding:10px 14px;
+  background:#222;
+  border:1px solid #444;
+  color:white;
+  border-radius:8px;
 }
 </style>
 </head>
@@ -97,42 +119,50 @@ button{
 
 <div>
   <div class="stage">
-    <div class="outer"></div>
 
-    <div class="inner" id="inner">
-      <div class="grid"></div>
-      <div class="shadow"></div>
+    <div class="circleContainer">
+
+      <div class="masked">
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="ring red" id="ring"></div>
+
+      <div class="arrow left" id="arrowLeft">⬅</div>
+      <div class="arrow right" id="arrowRight">➡</div>
+      <div class="arrow up" id="arrowUp">⬆</div>
+      <div class="arrow down" id="arrowDown">⬇</div>
+
     </div>
-
-    <div class="ringWrap">
-      <div class="ring"></div>
-    </div>
-
-    <div class="arrow left" id="arrowLeft">⬅</div>
-    <div class="arrow right" id="arrowRight">➡</div>
-    <div class="arrow up" id="arrowUp">⬆</div>
-    <div class="arrow down" id="arrowDown">⬇</div>
 
   </div>
 
-  <div class="meta" id="meta">Tilt: 0°</div>
+  <div class="meta" id="meta">Correction: 0°</div>
   <button id="start">Start</button>
 </div>
 
 <script>
-const inner = document.getElementById('inner');
-const meta = document.getElementById('meta');
+const grid = document.getElementById("grid");
+const ring = document.getElementById("ring");
+const meta = document.getElementById("meta");
 
-const arrowLeft = document.getElementById('arrowLeft');
-const arrowRight = document.getElementById('arrowRight');
-const arrowUp = document.getElementById('arrowUp');
-const arrowDown = document.getElementById('arrowDown');
+const arrowLeft = document.getElementById("arrowLeft");
+const arrowRight = document.getElementById("arrowRight");
+const arrowUp = document.getElementById("arrowUp");
+const arrowDown = document.getElementById("arrowDown");
 
 let tx=0, ty=0, x=0, y=0, vx=0, vy=0;
 const spring=0.09;
-const friction=0.84;
-const sense=2.5;
+const friction=0.85;
+const sense=2.6;
+const maxErr=40;
 let running=false;
+let snapped=false;
+
+const targetGamma=0;
+const targetBeta=0;
+
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
 
 function animate(){
 
@@ -147,60 +177,78 @@ function animate(){
 
   const dist = Math.hypot(x,y);
 
-  /* STRONG WRAP EFFECT */
-  const bendX = y * -1.4;
-  const bendY = x * 1.4;
+  /* Magnetic Snap */
+  if(dist < 3){
+    x *= 0.7;
+    y *= 0.7;
+  }
 
-  const depth = dist * 1.2;
-  const scale = 1 + dist/180;
+  /* Dramatic correction-based warp */
+  const bendX = y * -1.2;
+  const bendY = x * 1.2;
+  const depth = dist * 1.1;
+  const scale = 1 + dist/220;
 
-  inner.style.transform = `
+  grid.style.transform = `
     rotateX(${bendX}deg)
     rotateY(${bendY}deg)
     translateZ(${depth}px)
     scale(${scale})
   `;
 
-  /* ARROW LOGIC */
-  arrowLeft.classList.remove("show");
-  arrowRight.classList.remove("show");
-  arrowUp.classList.remove("show");
-  arrowDown.classList.remove("show");
+  /* State */
+  ring.classList.remove("red","yellow","green");
 
-  if(Math.abs(x) > 8){
-    if(x > 0){
-      arrowLeft.classList.add("show");
-    }else{
-      arrowRight.classList.add("show");
-    }
+  if(dist > 22){
+    ring.classList.add("red");
+    snapped=false;
   }
-
-  if(Math.abs(y) > 8){
-    if(y > 0){
-      arrowUp.classList.add("show");
-    }else{
-      arrowDown.classList.add("show");
-    }
+  else if(dist > 10){
+    ring.classList.add("yellow");
+    snapped=false;
   }
-
-  if(dist < 5){
-    if(navigator.vibrate){
-      navigator.vibrate(30);
+  else{
+    ring.classList.add("green");
+    if(!snapped){
+      if(navigator.vibrate) navigator.vibrate(40);
+      snapped=true;
     }
   }
 
   requestAnimationFrame(animate);
 }
 
+function updateArrows(ex, ey){
+
+  arrowLeft.classList.remove("show");
+  arrowRight.classList.remove("show");
+  arrowUp.classList.remove("show");
+  arrowDown.classList.remove("show");
+
+  if(Math.abs(ex) > 8){
+    if(ex > 0) arrowRight.classList.add("show");
+    else arrowLeft.classList.add("show");
+  }
+
+  if(Math.abs(ey) > 8){
+    if(ey > 0) arrowDown.classList.add("show");
+    else arrowUp.classList.add("show");
+  }
+}
+
 function handleOrientation(e){
   const gamma = e.gamma || 0;
   const beta = e.beta || 0;
 
-  tx = gamma * sense;
-  ty = beta * sense;
+  const errorX = targetGamma - gamma;
+  const errorY = targetBeta - beta;
 
-  const tiltMag = Math.hypot(gamma, beta);
-  meta.textContent = "Tilt: " + tiltMag.toFixed(1) + "°";
+  tx = clamp(errorX * sense, -maxErr, maxErr);
+  ty = clamp(errorY * sense, -maxErr, maxErr);
+
+  meta.innerText = "Correction: " + Math.hypot(errorX,errorY).toFixed(1) + "°";
+
+  updateArrows(errorX, errorY);
 }
 
 async function start(){
@@ -213,8 +261,8 @@ async function start(){
 
   if(typeof DeviceOrientationEvent !== "undefined" &&
      typeof DeviceOrientationEvent.requestPermission === "function"){
-     const res = await DeviceOrientationEvent.requestPermission();
-     if(res !== "granted") return;
+    const res = await DeviceOrientationEvent.requestPermission();
+    if(res !== "granted") return;
   }
 
   window.addEventListener("deviceorientation", handleOrientation);
@@ -225,5 +273,6 @@ document.getElementById("start").addEventListener("click", start);
 
 animate();
 </script>
+
 </body>
 </html>
