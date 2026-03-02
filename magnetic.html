@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOCAi Masked Circle Alignment</title>
+<title>SOCAi Alignment</title>
 
 <style>
 body{
@@ -30,61 +30,48 @@ body{
   left:50%;
   transform:translate(-50%,-50%);
   border-radius:50%;
-  overflow:hidden; /* fallback */
+  overflow:hidden;
 }
 
-/* MASK grid only inside circle */
+/* MASK GRID */
 .masked{
   position:absolute;
   inset:0;
   border-radius:50%;
-
   -webkit-mask: radial-gradient(circle, white 100%, transparent 101%);
   mask: radial-gradient(circle, white 100%, transparent 101%);
 }
 
-/* GRID */
 .grid{
   position:absolute;
   inset:-40px;
   background:
-    radial-gradient(circle, rgba(255,255,255,.30) 1.4px, transparent 1.5px);
+    radial-gradient(circle, rgba(255,255,255,.35) 1.5px, transparent 1.6px);
   background-size:20px 20px;
-  opacity:.85;
   transform-style:preserve-3d;
   will-change:transform;
 }
 
-/* RING STATE */
+/* RING */
 .ring{
   position:absolute;
   inset:0;
   border-radius:50%;
   border:3px solid;
-  transition:border-color .25s ease, box-shadow .25s ease;
+  transition:.25s ease;
 }
 
-.red{
-  border-color:#FF4D4D;
-  box-shadow:0 0 14px rgba(255,77,77,.6);
-}
+.red{ border-color:#FF4D4D; box-shadow:0 0 14px rgba(255,77,77,.6); }
+.yellow{ border-color:#FFC857; box-shadow:0 0 14px rgba(255,200,87,.6); }
+.green{ border-color:#2BE38C; box-shadow:0 0 18px rgba(43,227,140,.8); }
 
-.yellow{
-  border-color:#FFC857;
-  box-shadow:0 0 14px rgba(255,200,87,.6);
-}
-
-.green{
-  border-color:#2BE38C;
-  box-shadow:0 0 18px rgba(43,227,140,.75);
-}
-
-/* ARROWS */
+/* ARROWS INSIDE CIRCLE */
 .arrow{
   position:absolute;
-  font-size:26px;
+  font-size:22px;
   opacity:0;
   transition:.2s ease;
+  pointer-events:none;
 }
 
 .arrow.show{
@@ -92,10 +79,10 @@ body{
   transform:scale(1.2);
 }
 
-.arrow.left{ left:-40px; top:50%; transform:translateY(-50%); }
-.arrow.right{ right:-40px; top:50%; transform:translateY(-50%); }
-.arrow.up{ top:-40px; left:50%; transform:translateX(-50%); }
-.arrow.down{ bottom:-40px; left:50%; transform:translateX(-50%); }
+.arrow.left{ left:20px; top:50%; transform:translateY(-50%); }
+.arrow.right{ right:20px; top:50%; transform:translateY(-50%); }
+.arrow.up{ top:20px; left:50%; transform:translateX(-50%); }
+.arrow.down{ bottom:20px; left:50%; transform:translateX(-50%); }
 
 .meta{
   margin-top:380px;
@@ -128,6 +115,7 @@ button{
 
       <div class="ring red" id="ring"></div>
 
+      <!-- Arrows -->
       <div class="arrow left" id="arrowLeft">⬅</div>
       <div class="arrow right" id="arrowRight">➡</div>
       <div class="arrow up" id="arrowUp">⬆</div>
@@ -177,13 +165,12 @@ function animate(){
 
   const dist = Math.hypot(x,y);
 
-  /* Magnetic Snap */
   if(dist < 3){
     x *= 0.7;
     y *= 0.7;
   }
 
-  /* Dramatic correction-based warp */
+  /* Warp based on correction */
   const bendX = y * -1.2;
   const bendY = x * 1.2;
   const depth = dist * 1.1;
