@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOCAi Alignment</title>
+<title>SOCAi SVG State Alignment</title>
 
 <style>
 body{
@@ -52,26 +52,25 @@ body{
   will-change:transform;
 }
 
-/* RING */
-.ring{
+/* SVG STATES */
+.stateSVG{
   position:absolute;
   inset:0;
-  border-radius:50%;
-  border:3px solid;
-  transition:.25s ease;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .25s ease;
 }
 
-.red{ border-color:#FF4D4D; box-shadow:0 0 14px rgba(255,77,77,.6); }
-.yellow{ border-color:#FFC857; box-shadow:0 0 14px rgba(255,200,87,.6); }
-.green{ border-color:#2BE38C; box-shadow:0 0 18px rgba(43,227,140,.8); }
+.stateSVG.active{
+  opacity:1;
+}
 
-/* ARROWS INSIDE CIRCLE */
+/* ARROWS */
 .arrow{
   position:absolute;
   font-size:22px;
   opacity:0;
   transition:.2s ease;
-  pointer-events:none;
 }
 
 .arrow.show{
@@ -109,11 +108,40 @@ button{
 
     <div class="circleContainer">
 
+      <!-- MASKED GRID -->
       <div class="masked">
         <div class="grid" id="grid"></div>
       </div>
 
-      <div class="ring red" id="ring"></div>
+      <!-- SVG RED -->
+      <svg class="stateSVG active" id="svgRed"
+           viewBox="0 0 260 260">
+        <circle cx="130" cy="130" r="125"
+                stroke="#FF4D4D"
+                stroke-width="4"
+                fill="none"
+                filter="drop-shadow(0 0 14px rgba(255,77,77,.6))"/>
+      </svg>
+
+      <!-- SVG YELLOW -->
+      <svg class="stateSVG" id="svgYellow"
+           viewBox="0 0 260 260">
+        <circle cx="130" cy="130" r="125"
+                stroke="#FFC857"
+                stroke-width="4"
+                fill="none"
+                filter="drop-shadow(0 0 14px rgba(255,200,87,.6))"/>
+      </svg>
+
+      <!-- SVG GREEN -->
+      <svg class="stateSVG" id="svgGreen"
+           viewBox="0 0 260 260">
+        <circle cx="130" cy="130" r="125"
+                stroke="#2BE38C"
+                stroke-width="4"
+                fill="none"
+                filter="drop-shadow(0 0 18px rgba(43,227,140,.8))"/>
+      </svg>
 
       <!-- Arrows -->
       <div class="arrow left" id="arrowLeft">⬅</div>
@@ -131,8 +159,11 @@ button{
 
 <script>
 const grid = document.getElementById("grid");
-const ring = document.getElementById("ring");
 const meta = document.getElementById("meta");
+
+const svgRed = document.getElementById("svgRed");
+const svgYellow = document.getElementById("svgYellow");
+const svgGreen = document.getElementById("svgGreen");
 
 const arrowLeft = document.getElementById("arrowLeft");
 const arrowRight = document.getElementById("arrowRight");
@@ -152,6 +183,29 @@ const targetBeta=0;
 
 function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
 
+function setState(dist){
+
+  svgRed.classList.remove("active");
+  svgYellow.classList.remove("active");
+  svgGreen.classList.remove("active");
+
+  if(dist > 22){
+    svgRed.classList.add("active");
+    snapped=false;
+  }
+  else if(dist > 10){
+    svgYellow.classList.add("active");
+    snapped=false;
+  }
+  else{
+    svgGreen.classList.add("active");
+    if(!snapped){
+      if(navigator.vibrate) navigator.vibrate(40);
+      snapped=true;
+    }
+  }
+}
+
 function animate(){
 
   vx += (tx - x) * spring;
@@ -170,7 +224,6 @@ function animate(){
     y *= 0.7;
   }
 
-  /* Warp based on correction */
   const bendX = y * -1.2;
   const bendY = x * 1.2;
   const depth = dist * 1.1;
@@ -183,24 +236,7 @@ function animate(){
     scale(${scale})
   `;
 
-  /* State */
-  ring.classList.remove("red","yellow","green");
-
-  if(dist > 22){
-    ring.classList.add("red");
-    snapped=false;
-  }
-  else if(dist > 10){
-    ring.classList.add("yellow");
-    snapped=false;
-  }
-  else{
-    ring.classList.add("green");
-    if(!snapped){
-      if(navigator.vibrate) navigator.vibrate(40);
-      snapped=true;
-    }
-  }
+  setState(dist);
 
   requestAnimationFrame(animate);
 }
