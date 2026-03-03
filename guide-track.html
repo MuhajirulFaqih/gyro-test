@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SOCAi Ideal Angle Guide</title>
+
+<style>
+body{
+  margin:0;
+  background:#0f0f14;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:system-ui;
+  color:white;
+}
+
+.stage{
+  position:relative;
+  width:360px;
+  height:360px;
+}
+
+.circle{
+  position:absolute;
+  width:260px;
+  height:260px;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* TARGET GUIDE (always ideal angle) */
+.guide{
+  width:240px;
+  height:240px;
+  border-radius:50%;
+  border:4px solid #FF4D4D;
+  transition:all .25s ease;
+}
+
+/* STATES */
+.red{ border-color:#FF4D4D; box-shadow:0 0 14px rgba(255,77,77,.5); }
+.yellow{ border-color:#FFC857; box-shadow:0 0 14px rgba(255,200,87,.5); }
+.green{ border-color:#2BE38C; box-shadow:0 0 18px rgba(43,227,140,.8); }
+
+.meta{
+  margin-top:380px;
+  text-align:center;
+  font-size:14px;
+  opacity:.8;
+}
+
+button{
+  display:block;
+  margin:10px auto;
+  padding:10px 14px;
+  background:#222;
+  border:1px solid #444;
+  color:white;
+  border-radius:8px;
+}
+</style>
+</head>
+<body>
+
+<div>
+  <div class="stage">
+    <div class="circle">
+      <div class="guide red" id="guide"></div>
+    </div>
+  </div>
+
+  <div class="meta" id="meta">Angle: 0°</div>
+  <button id="start">Start</button>
+</div>
+
+<script>
+const guide = document.getElementById("guide");
+const meta = document.getElementById("meta");
+
+let running=false;
+let snapped=false;
+
+const targetGamma = 0;
+const targetBeta = 0;
+
+function setState(dist){
+
+  guide.classList.remove("red","yellow","green");
+
+  if(dist > 20){
+    guide.classList.add("red");
+    snapped=false;
+  }
+  else if(dist > 8){
+    guide.classList.add("yellow");
+    snapped=false;
+  }
+  else{
+    guide.classList.add("green");
+    if(!snapped){
+      if(navigator.vibrate) navigator.vibrate(40);
+      snapped=true;
+    }
+  }
+}
+
+function handleOrientation(e){
+
+  const gamma = e.gamma || 0;
+  const beta  = e.beta  || 0;
+
+  const errorX = gamma - targetGamma;
+  const errorY = beta  - targetBeta;
+
+  const dist = Math.hypot(errorX, errorY);
+
+  meta.innerText = "Angle: " + dist.toFixed(1) + "°";
+
+  setState(dist);
+}
+
+async function start(){
+
+  if(running){
+    window.removeEventListener("deviceorientation", handleOrientation);
+    running=false;
+    return;
+  }
+
+  if(typeof DeviceOrientationEvent !== "undefined" &&
+     typeof DeviceOrientationEvent.requestPermission === "function"){
+    const res = await DeviceOrientationEvent.requestPermission();
+    if(res !== "granted") return;
+  }
+
+  window.addEventListener("deviceorientation", handleOrientation);
+  running=true;
+}
+
+document.getElementById("start").addEventListener("click", start);
+</script>
+
+</body>
+</html>
