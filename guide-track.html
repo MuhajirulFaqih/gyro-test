@@ -222,8 +222,8 @@ function animate(){
 
   dynamic.style.transform =
     `translate(-50%, -50%)
-     rotateX(${currentY * -0.8}deg)
-     rotateY(${currentX * 0.8}deg)
+     rotateX(${(-currentY) * -0.8}deg)
+     rotateY(${(-currentX) * 0.8}deg)
      translateZ(${depth}px)`;
 
   const tiltDeg = Math.sqrt(targetX*targetX + targetY*targetY).toFixed(1);
